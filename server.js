@@ -28,14 +28,6 @@ io.on("connection", async (socket) => {
   console.log(`客户端连接: ${socket.id}`);
   // 向客户端发送连接成功的问候
   socket.emit("hello", "来自服务器【本地socket-server】的问候");
-  // 测试数据库工具
-  console.log("🔍 正在验证数据库连接...");
-  {
-    // 测试查询数据库版本
-    const [{ version }] = await mysql`SELECT version()`;
-    console.log("✅ 数据库连接成功！");
-    console.log(`📌 数据库版本: ${version.slice(0, 50)}...`);
-  }
   // 监听客户端加入房间事件
   socket.on("join", (roomId) => {
     socket.join(roomId);
@@ -43,10 +35,46 @@ io.on("connection", async (socket) => {
   });
 
   // 监听客户端发送消息事件
-  socket.on("chat", (payload) => {
+  socket.on("chat", async (payload) => {
+    const { body, sender_id, roomId, last_read_seq } = payload;
     console.log(`收到客户端 ${socket.id} 的消息:`, payload);
-    // 将消息广播到指定房间的所有客户端
-    io.to(payload.roomId).emit("chat", payload);
+    try {
+      /**
+       * Neon（Postgres）不允许在 聚合函数（MAX()）上直接加 FOR UPDATE；FOR UPDATE 只能锁具体行或间隙，而 MAX() 返回的是聚合结果，不是物理行。
+       */
+      /* 1. 锁最新一行拿 seq */
+      const [lastRow] = await mysql`
+        SELECT seq
+        FROM   message
+        WHERE  room_id = ${roomId}
+        ORDER  BY seq DESC
+        LIMIT  1
+        FOR UPDATE
+      `;
+      const nextSeq = (lastRow?.seq ?? 0) * 1 + 1;
+
+      /* 2. 插入并拿回完整数据 */
+      const [insertRes] = await mysql`
+        INSERT INTO message (room_id, seq, sender_id, body)
+        VALUES (${roomId}, ${nextSeq}, ${sender_id}, ${body})
+        RETURNING id, created_at
+      `;
+
+      /* 3. 组装 & 广播 */
+      const newMsg = {
+        id: insertRes.id,
+        room_id: roomId,
+        seq: nextSeq,
+        sender_id,
+        body,
+        created_at: insertRes.created_at,
+      };
+      io.to(roomId).emit("chat", newMsg);
+    } catch (e) {
+      await mysql`ROLLBACK`; // 回滚事务
+      console.error("[ws] chat 事务失败:", e);
+      socket.emit("error", { msg: "发送失败" });
+    }
   });
 
   // 监听客户端断开连接事件
@@ -57,7 +85,7 @@ io.on("connection", async (socket) => {
 
 // 设置服务器端口
 const port = process.env.PORT || 8888;
-
+app.listen(port, () => console.log(`Listening on :${port}`));
 // 启动服务器
 httpServer.listen(port, () => {
   console.log(`Socket服务器已启动，端口号: ${port}`);
