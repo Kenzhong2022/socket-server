@@ -20,5 +20,5 @@ io.on("connection", (s) => {
   s.emit("hello", "from-railway");
 });
 
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 8888;
 httpServer.listen(port, () => console.log(`Socket ready on ${port}`));
