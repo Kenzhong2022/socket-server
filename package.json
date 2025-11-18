@@ -1,4 +1,5 @@
 {
+ "type": "module",
   "name": "shop101-socket-server",
   "version": "1.0.0",
   "description": "",
@@ -11,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@neondatabase/serverless": "^1.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",

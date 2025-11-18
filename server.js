@@ -1,12 +1,12 @@
 // server.js
-/**测试自动部署 */
-
+import getNeon from "./neon.js";
+const mysql = getNeon();
 // 导入所需的模块
-require("dotenv").config(); // 加载环境变量
-const express = require("express"); // 导入Express框架
-const http = require("http"); // 导入HTTP模块
-const { Server } = require("socket.io"); // 导入Socket.io服务器类
-const cors = require("cors"); // 导入CORS中间件
+import "dotenv/config"; // 相当于 require('dotenv').config()
+import express from "express";
+import http from "http";
+import { Server } from "socket.io";
+import cors from "cors";
 
 // 创建Express应用
 const app = express();
@@ -24,11 +24,18 @@ const io = new Server(httpServer, {
 });
 
 // 监听客户端连接事件
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log(`客户端连接: ${socket.id}`);
   // 向客户端发送连接成功的问候
   socket.emit("hello", "来自服务器【本地socket-server】的问候");
-
+  // 测试数据库工具
+  console.log("🔍 正在验证数据库连接...");
+  {
+    // 测试查询数据库版本
+    const [{ version }] = await mysql`SELECT version()`;
+    console.log("✅ 数据库连接成功！");
+    console.log(`📌 数据库版本: ${version.slice(0, 50)}...`);
+  }
   // 监听客户端加入房间事件
   socket.on("join", (roomId) => {
     socket.join(roomId);
