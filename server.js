@@ -85,7 +85,6 @@ io.on("connection", async (socket) => {
 
 // 设置服务器端口
 const port = process.env.PORT || 8888;
-app.listen(port, () => console.log(`Listening on :${port}`));
 // 启动服务器
 httpServer.listen(port, () => {
   console.log(`Socket服务器已启动，端口号: ${port}`);
