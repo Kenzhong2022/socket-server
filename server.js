@@ -25,6 +25,7 @@ const io = new Server(httpServer, {
 
 // 监听客户端连接事件
 io.on("connection", async (socket) => {
+  socket.on("connection", "连接成功");
   console.log(`客户端连接: ${socket.id}`);
   // 向客户端发送连接成功的问候
   socket.emit("hello", "来自服务器【本地socket-server】的问候");
