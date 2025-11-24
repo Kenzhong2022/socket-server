@@ -81,11 +81,6 @@ io.on("connection", async (socket) => {
   socket.on("disconnect", () => {
     //告诉前端，我断开了连接
     socket.emit("disconnect", "客户端断开连接");
-    //断开连接后，再次发送问候
-    socket.emit(
-      "hello",
-      "来自服务器【本地socket-server】的问候，即将断开连接......"
-    );
     console.log(`客户端断开连接: ${socket.id}`);
   });
 });
