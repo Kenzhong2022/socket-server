@@ -80,7 +80,6 @@ io.on("connection", async (socket) => {
   // 监听客户端断开连接事件
   socket.on("disconnect", () => {
     //告诉前端，我断开了连接
-    socket.emit("disconnect", "客户端断开连接");
     console.log(`客户端断开连接: ${socket.id}`);
   });
 });
