@@ -32,6 +32,7 @@ io.on("connection", async (socket) => {
   socket.on("join", (roomId) => {
     socket.join(roomId);
     console.log(`客户端 ${socket.id} 加入房间 ${roomId}`);
+    socket.emit("joined", roomId); // 告诉客户端
   });
 
   // 监听客户端发送消息事件
