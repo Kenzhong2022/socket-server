@@ -27,7 +27,7 @@ const io = new Server(httpServer, {
 io.on("connection", async (socket) => {
   console.log(`客户端连接: ${socket.id}`);
   // 向客户端发送连接成功的问候
-  socket.emit("hello", "来自服务器【本地socket-server】的问候");
+  socket.emit("hello", "来自服务器【本地socket-server】的问候, 你好!欢迎连接");
   // 监听客户端加入房间事件
   socket.on("join", (roomId) => {
     socket.join(roomId);
@@ -69,6 +69,7 @@ io.on("connection", async (socket) => {
         body,
         created_at: insertRes.created_at,
       };
+      console.log("广播消息给房间", roomId, newMsg);
       io.to(roomId).emit("chat", newMsg);
     } catch (e) {
       await mysql`ROLLBACK`; // 回滚事务
