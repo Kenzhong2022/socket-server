@@ -40,6 +40,11 @@ io.on("connection", async (socket) => {
     const { body, sender_id, roomId, last_read_seq } = payload;
     console.log(`收到客户端 ${socket.id} 的消息:`, payload);
     try {
+      // 新增: 告诉前端正在发送中
+      io.to(roomId).emit("chat", {
+        status: "pending",
+        ...payload,
+      });
       /**
        * Neon（Postgres）不允许在 聚合函数（MAX()）上直接加 FOR UPDATE；FOR UPDATE 只能锁具体行或间隙，而 MAX() 返回的是聚合结果，不是物理行。
        */
@@ -71,11 +76,19 @@ io.on("connection", async (socket) => {
         created_at: insertRes.created_at,
       };
       console.log("广播消息给房间", roomId, newMsg);
-      io.to(roomId).emit("chat", newMsg);
+      io.to(roomId).emit("chat", {
+        status: "fulfill",
+        ...newMsg,
+      });
+      socket.emit("chat", {});
     } catch (e) {
       await mysql`ROLLBACK`; // 回滚事务
       console.error("[ws] chat 事务失败:", e);
       socket.emit("error", { msg: "发送失败" });
+      socket.emit("chat", {
+        status: "fulfill",
+        ...payload,
+      });
     }
   });
 
