@@ -80,12 +80,11 @@ io.on("connection", async (socket) => {
         status: "fulfill",
         ...newMsg,
       });
-      socket.emit("chat", {});
     } catch (e) {
       await mysql`ROLLBACK`; // 回滚事务
       console.error("[ws] chat 事务失败:", e);
       socket.emit("error", { msg: "发送失败" });
-      socket.emit("chat", {
+      io.to(roomId).emit("chat", {
         status: "fulfill",
         ...payload,
       });
