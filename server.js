@@ -44,7 +44,7 @@ io.on("connection", async (socket) => {
       io.to(roomId).emit("chat", {
         status: "pending",
         ...payload,
-        seq: last_read_seq + 1,
+        seq: Number(last_read_seq) + 1,
       });
       /**
        * Neon（Postgres）不允许在 聚合函数（MAX()）上直接加 FOR UPDATE；FOR UPDATE 只能锁具体行或间隙，而 MAX() 返回的是聚合结果，不是物理行。
